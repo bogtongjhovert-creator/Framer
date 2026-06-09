@@ -69,16 +69,6 @@
             transition: all 0.2s;
         }
         input[type="file"]:hover { border-color: rgba(255,255,255,0.2); background: rgba(0, 0, 0, 0.25); }
-        input[type="file"]::-webkit-file-upload-button {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            margin-right: 10px;
-            font-weight: 500;
-        }
         
         .button-group { display: flex; gap: 12px; }
         button { 
@@ -95,7 +85,6 @@
         }
         button:hover { background: #147ce5; transform: scale(1.01); }
         button:active { transform: scale(0.99); background: #0066cc; }
-        button:disabled { background: rgba(255,255,255,0.05); color: #64748b; cursor: not-allowed; }
         
         .refresh-btn { 
             width: auto; 
@@ -151,6 +140,7 @@
         .history-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
         .history-log-box { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 2px; }
         
+        /* Interactive Clickable Cards Styles */
         .history-card {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.05);
@@ -158,6 +148,13 @@
             padding: 12px;
             font-size: 11px;
             position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .history-card:hover {
+            background: rgba(255, 255, 255, 0.07);
+            border-color: rgba(0, 113, 227, 0.4);
+            transform: translateY(-1px);
         }
         .history-card .meta-date { color: #0071e3; font-weight: 600; margin-bottom: 4px; font-size: 10px; }
         .history-card .meta-title { color: #ffffff; font-weight: 500; font-size: 13px; margin-bottom: 2px; }
@@ -166,15 +163,21 @@
             position: absolute;
             top: 10px; right: 10px;
             background: none; border: none; color: #ef4444; font-size: 12px;
-            cursor: pointer; padding: 2px; width: auto;
+            cursor: pointer; padding: 2px; width: auto; z-index: 10;
         }
+        .history-card .delete-task-btn:hover { color: #f87171; }
 
-        /* Modal Sheets */
+        /* Modal Sheets Layout */
         .modal-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(15px); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-body { background: rgba(23, 23, 23, 0.75); backdrop-filter: blur(40px) saturate(200%); border: 1px solid rgba(255, 255, 255, 0.15); padding: 30px; border-radius: 24px; max-width: 500px; width: 95%; max-height: 90vh; overflow-y: auto; box-shadow: 0 30px 60px rgba(0,0,0,0.5); box-sizing: border-box; color: #ffffff; }
+        .modal-body { background: rgba(23, 23, 23, 0.85); backdrop-filter: blur(40px) saturate(200%); border: 1px solid rgba(255, 255, 255, 0.15); padding: 30px; border-radius: 24px; max-width: 500px; width: 95%; max-height: 90vh; overflow-y: auto; box-shadow: 0 30px 60px rgba(0,0,0,0.5); box-sizing: border-box; color: #ffffff; }
         .canvas-container { position: relative; width: 280px; height: 280px; margin: 0 auto 20px auto; border: 1px dashed rgba(255,255,255,0.2); border-radius: 12px; background: rgba(0,0,0,0.4); display: flex; justify-content: center; align-items: center; overflow: hidden; }
         .modal-canvas { max-width: 100%; max-height: 100%; }
         
+        /* Inspection Metadata Grid Styles */
+        .inspect-matrix-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); padding: 16px; border-radius: 14px; margin-bottom: 20px; }
+        .inspect-meta-item { font-size: 12px; color: #cbd5e1; }
+        .inspect-meta-item strong { color: #ffffff; display: block; margin-bottom: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; color: #94a3b8; }
+
         .control-panel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 16px; }
         .control-btn { padding: 8px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255,255,255,0.02); border-radius: 6px; font-size: 11px; font-weight: 500; color: #e2e8f0; cursor: pointer; }
         
@@ -312,9 +315,28 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="viewHistoryModal">
+    <div class="modal-body">
+        <h3 id="inspectTitle" style="margin-top: 0; margin-bottom: 6px; font-size:18px; color:#ffffff;">Batch Specifications</h3>
+        <p id="inspectDate" style="font-size:12px; color:#0071e3; margin: 0 0 20px 0; font-weight:600;"></p>
+        
+        <div class="inspect-matrix-grid">
+            <div class="inspect-meta-item"><strong>Template String</strong><span id="inspectTemplate">--</span></div>
+            <div class="inspect-meta-item"><strong>Image Count</strong><span id="inspectCount">--</span></div>
+            <div class="inspect-meta-item"><strong>Naming Serialization</strong><span id="inspectNaming">--</span></div>
+            <div class="inspect-meta-item"><strong>Sync Channel</strong><span id="inspectChannel">Active Edge Matrix</span></div>
+        </div>
+
+        <h3 style="font-size:13px; margin-bottom:10px; text-transform:uppercase; color:#94a3b8; letter-spacing:0.5px;">Applied Master Lighting Matrix</h3>
+        <div class="inspect-matrix-grid" id="inspectLightingBox" style="margin-bottom:24px;">
+            </div>
+
+        <button class="control-btn save-btn" onclick="closeHistoryModal()" style="padding:12px;">Close Inspection Window</button>
+    </div>
+</div>
+
 <script>
 // --- ACCOUNT-FREE ZERO CONFIGURATION SYNC ENGINE ---
-// Uses a public distributed endpoint cluster to relay UI updates instantly across your devices
 const SYNC_CHANNEL_ID = "framer_sync_session_global_v2";
 const pusherEngine = new Pusher('72054fb4a682da081b83', { cluster: 'ap1', encrypted: true });
 const connectionChannel = pusherEngine.subscribe(SYNC_CHANNEL_ID);
@@ -332,11 +354,9 @@ let tempYOffset = 0;
 let currentTones = { brightness: 0, contrast: 0, highlights: 0, shadows: 0, whites: 0, blacks: 0 };
 
 document.addEventListener("DOMContentLoaded", () => {
-    // Sync starting local memory
     localMemoryHistoryState = JSON.parse(localStorage.getItem("framerMemoryState") || "[]");
     renderHistoryCardsMarkup();
 
-    // Listen for live updates broadcasted by any other device
     connectionChannel.bind('sync-task-action', (packagePayload) => {
         if(packagePayload && packagePayload.action === "append") {
             localMemoryHistoryState.unshift(packagePayload.data);
@@ -361,14 +381,43 @@ function renderHistoryCardsMarkup() {
     localMemoryHistoryState.forEach(task => {
         const card = document.createElement('div');
         card.className = "history-card";
+        // Click event opens custom Inspection sheet window modal
+        card.setAttribute("onclick", `openHistoryInspectionSheet('${task.id}')`);
         card.innerHTML = `
             <div class="meta-date">${task.date}</div>
             <div class="meta-title">${task.frameName} Series</div>
             <div class="meta-details">Processed & renamed ${task.count} photos (1 to ${task.count})</div>
-            <button class="delete-task-btn" onclick="executeDeleteTransaction('${task.id}')">✕</button>
+            <button class="delete-task-btn" onclick="executeDeleteTransaction(event, '${task.id}')">✕</button>
         `;
         box.appendChild(card);
     });
+}
+
+function openHistoryInspectionSheet(recordId) {
+    const targetRecord = localMemoryHistoryState.find(item => item.id === recordId);
+    if(!targetRecord) return;
+
+    document.getElementById('inspectTitle').innerText = `${targetRecord.frameName} Export Parameters`;
+    document.getElementById('inspectDate').innerText = `Generated on ${targetRecord.date}`;
+    document.getElementById('inspectTemplate').innerText = `${targetRecord.frameName}.png`;
+    document.getElementById('inspectCount').innerText = `${targetRecord.count} Items Processed`;
+    document.getElementById('inspectNaming').innerText = `"${targetRecord.frameName} 1.png" to "${targetRecord.frameName} ${targetRecord.count}.png"`;
+
+    const lightBox = document.getElementById('inspectLightingBox');
+    lightBox.innerHTML = "";
+    
+    // Display rendering tone presets used during execution path
+    const tones = targetRecord.savedTones || { brightness: 0, contrast: 0, highlights: 0, shadows: 0, whites: 0, blacks: 0 };
+    Object.keys(tones).forEach(key => {
+        const valFormatted = (tones[key] > 0 ? '+' : '') + tones[key];
+        lightBox.innerHTML += `<div class="inspect-meta-item"><strong>${key}</strong>${valFormatted}</div>`;
+    });
+
+    document.getElementById('viewHistoryModal').style.display = "flex";
+}
+
+function closeHistoryModal() {
+    document.getElementById('viewHistoryModal').style.display = "none";
 }
 
 function recordGenerationToTaskHistory(itemCount, sourceTemplate) {
@@ -380,15 +429,15 @@ function recordGenerationToTaskHistory(itemCount, sourceTemplate) {
         id: "task_" + Date.now() + "_" + Math.floor(Math.random()*1000),
         date: `${cleanDateStr} at ${cleanTimeStr}`,
         frameName: sourceTemplate,
-        count: itemCount
+        count: itemCount,
+        // Capture exact state settings configurations used for deep log auditing across screens
+        savedTones: { ...currentTones }
     };
 
-    // Append locally
     localMemoryHistoryState.unshift(generatedRecord);
     localStorage.setItem("framerMemoryState", JSON.stringify(localMemoryHistoryState));
     renderHistoryCardsMarkup();
 
-    // Broadcast live to your other screens over the edge layer
     fetch(`https://jsonbin.org/ping/broadcast`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -397,7 +446,8 @@ function recordGenerationToTaskHistory(itemCount, sourceTemplate) {
     }).catch(() => {});
 }
 
-function executeDeleteTransaction(targetId) {
+function executeDeleteTransaction(event, targetId) {
+    event.stopPropagation(); // Block main card click trigger loop sequence
     localMemoryHistoryState = localMemoryHistoryState.filter(item => item.id !== targetId);
     localStorage.setItem("framerMemoryState", JSON.stringify(localMemoryHistoryState));
     renderHistoryCardsMarkup();
